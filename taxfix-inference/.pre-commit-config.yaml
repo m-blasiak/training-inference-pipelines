@@ -1,0 +1,50 @@
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+    -   id: check-byte-order-marker  # Forbid UTF-8 byte-order markers
+    # Check for files with names that would conflict on a case-insensitive
+    # filesystem like MacOS HFS+ or Windows FAT.
+    -   id: check-case-conflict
+    -   id: check-json
+    -   id: check-yaml
+        args: ['--allow-multiple-documents']
+    -   id: end-of-file-fixer
+    -   id: trailing-whitespace
+    -   id: mixed-line-ending
+-   repo: local
+    hooks:
+    - id: isort
+      name: "Sort imports"
+      language: system
+      types: [file, python]
+      files: .
+      entry: isort
+      args:
+        - "--profile=black"
+        - "--line-length=120"
+        - "--balanced"
+
+
+- repo: https://github.com/ambv/black
+  rev: '24.4.2'
+  hooks:
+    - id: black
+      args:
+        - --line-length=120
+
+        # these folders won't be formatted by black
+        - --exclude="""\.git |
+          \.__pycache__|
+          \.hg|
+          \.mypy_cache|
+          \.venv|
+          """
+
+      language_version: python3.11
+- repo: https://github.com/PyCQA/flake8
+  rev: '7.1.0'
+  hooks:
+  - id: flake8
+    args:
+    - "--ignore=E712,E722,E126,E127,W503,E203,E501"

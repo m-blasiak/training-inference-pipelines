@@ -1,0 +1,7 @@
+.idea/
+env/
+
+*pycache*
+*.pkl
+*.csv
+.DS_Store

@@ -1,0 +1,41 @@
+services:
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v2.19.0
+    container_name: mlflow-server
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./logdir/mlflow/:/mlflow
+    command: ["mlflow", "server" ,"--host", "0.0.0.0", "--port", "5000", "--backend-store-uri",
+               "sqlite:////mlflow/mlflow.db", "--default-artifact-root", "/mlflow/mlflow-artifacts"]
+
+  model-training:
+    build:
+      context: ./taxfix-training
+      dockerfile: Dockerfile
+    container_name: model-training
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - GIT_PYTHON_REFRESH=quiet
+    volumes:
+      - ./logdir/mlflow/:/mlflow
+      - ./logdir/validation-data:/validation-data
+    depends_on:
+      - mlflow
+    command: ["python", "-m", "taxfix_training.main"]
+
+  model-inference:
+    build:
+      context: ./taxfix-inference
+      dockerfile: Dockerfile
+    container_name: taxfix-inference
+    ports:
+      - "8000:8000"
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+    depends_on:
+      model-training:
+        condition: service_completed_successfully
+    volumes:
+      - ./logdir/mlflow/:/mlflow
+    command: ["/app/.venv/bin/uvicorn", "taxfix_inference.main:app", "--host", "0.0.0.0", "--port", "8000"]
